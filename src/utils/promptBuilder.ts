@@ -7,14 +7,11 @@ export function buildPrompt({ clientData, message, source }: { clientData: any, 
     rol = 'Eres la asistente de ventas y atención al cliente del negocio. Atiendes a visitantes y potenciales clientes en la web o redes sociales.';
   }
 
+  // Solo retornar el mensaje del usuario, el contexto debe estar en la configuración del Assistant
   return [
     {
-      role: 'system',
-      content: `Contexto del cliente (clientId: ${clientData?.id || 'desconocido'}): ${JSON.stringify(clientData)}. Canal: ${source}. ${rol}`,
-    },
-    {
       role: 'user',
-      content: message,
+      content: `Contexto del cliente (clientId: ${clientData?.id || 'desconocido'}): ${JSON.stringify(clientData)}. Canal: ${source}. ${rol}\n\nMensaje del usuario: ${message}`,
     },
   ];
 } 

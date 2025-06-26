@@ -6,27 +6,20 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const assistantId = process.env.OPENAI_ASSISTANT_ID || '';
 
 export async function askNNIAWithAssistantAPI(messages: {role: string, content: string}[], threadId?: string) {
-  // 1. Si no hay thread, crear uno nuevo y añadir todos los mensajes (system + user)
+  // 1. Si no hay thread, crear uno nuevo
   let thread = threadId;
   if (!thread) {
     const threadRes = await openai.beta.threads.create();
     thread = threadRes.id;
-    // Añadir todos los mensajes iniciales (system y user)
-    for (const msg of messages) {
-      await openai.beta.threads.messages.create(thread, {
-        role: msg.role as any,
-        content: msg.content,
-      });
-    }
-  } else {
-    // Si el thread ya existe, solo añadir el mensaje del usuario
-    const userMsg = messages.find(m => m.role === 'user');
-    if (userMsg) {
-      await openai.beta.threads.messages.create(thread, {
-        role: 'user',
-        content: userMsg.content,
-      });
-    }
+  }
+
+  // 2. Solo añadir mensajes de usuario (no system)
+  const userMsg = messages.find(m => m.role === 'user');
+  if (userMsg) {
+    await openai.beta.threads.messages.create(thread, {
+      role: 'user',
+      content: userMsg.content,
+    });
   }
 
   // 3. Ejecutar el assistant (run)
