@@ -1,9 +1,16 @@
 export function buildPrompt({ clientData, message, source }: { clientData: any, message: string, source: string }) {
-  // Aquí se puede personalizar el prompt según el contexto y el cliente
+  // Determinar el rol de NNIA según el canal/source
+  let rol = '';
+  if (source === 'client-panel') {
+    rol = 'Eres la asistente personal del usuario, dueña o dueño del negocio. Responde de forma profesional, proactiva y con información interna.';
+  } else {
+    rol = 'Eres la asistente de ventas y atención al cliente del negocio. Atiendes a visitantes y potenciales clientes en la web o redes sociales.';
+  }
+
   return [
     {
       role: 'system',
-      content: `Eres NNIA, una asistente IA profesional. Contexto del cliente: ${JSON.stringify(clientData)}. Source: ${source}`,
+      content: `Contexto del cliente (clientId: ${clientData?.id || 'desconocido'}): ${JSON.stringify(clientData)}. Canal: ${source}. ${rol}`,
     },
     {
       role: 'user',
