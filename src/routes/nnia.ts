@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
 import { askNNIAWithAssistantAPI } from '../services/openai';
-import { getClientData } from '../services/supabase';
+import { getClientData, getPublicBusinessData } from '../services/supabase';
 
 const router = Router();
 
@@ -15,11 +15,11 @@ router.post('/respond', async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Obtener información real del usuario desde Supabase
-    const clientData = await getClientData(clientId);
+    // 1. Obtener información pública del negocio (sin datos confidenciales)
+    const businessData = await getPublicBusinessData(clientId);
 
-    // 2. Construir prompt personalizado (ahora sí se usa)
-    const prompt = buildPrompt({ clientData, message, source });
+    // 2. Construir prompt personalizado con solo información pública
+    const prompt = buildPrompt({ businessData, message, source });
 
     // 3. Llamar a la Assistant API de OpenAI (con prompt personalizado)
     const nniaResponse = await askNNIAWithAssistantAPI(prompt, threadId);
