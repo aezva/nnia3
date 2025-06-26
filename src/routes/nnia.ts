@@ -18,11 +18,11 @@ router.post('/respond', async (req: Request, res: Response) => {
     // 1. Obtener información real del usuario desde Supabase
     const clientData = await getClientData(clientId);
 
-    // 2. Construir prompt personalizado (opcional, puedes enviar contexto en el primer mensaje)
-    // const prompt = buildPrompt({ clientData, message, source });
+    // 2. Construir prompt personalizado (ahora sí se usa)
+    const prompt = buildPrompt({ clientData, message, source });
 
-    // 3. Llamar a la Assistant API de OpenAI (con threads)
-    const nniaResponse = await askNNIAWithAssistantAPI(message, threadId);
+    // 3. Llamar a la Assistant API de OpenAI (con prompt personalizado)
+    const nniaResponse = await askNNIAWithAssistantAPI(prompt, threadId);
 
     // 4. (Opcional) Aquí puedes analizar si OpenAI pidió ejecutar una función y ejecutarla
     // Por ejemplo, si nniaResponse.run.required_action === 'function_call', ejecuta la función y responde

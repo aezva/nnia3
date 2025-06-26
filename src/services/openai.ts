@@ -5,19 +5,29 @@ import OpenAI from 'openai';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const assistantId = process.env.OPENAI_ASSISTANT_ID || '';
 
-export async function askNNIAWithAssistantAPI(userMessage: string, threadId?: string) {
-  // 1. Si no hay thread, crear uno nuevo
+export async function askNNIAWithAssistantAPI(messages: {role: string, content: string}[], threadId?: string) {
+  // 1. Si no hay thread, crear uno nuevo y añadir todos los mensajes (system + user)
   let thread = threadId;
   if (!thread) {
     const threadRes = await openai.beta.threads.create();
     thread = threadRes.id;
+    // Añadir todos los mensajes iniciales (system y user)
+    for (const msg of messages) {
+      await openai.beta.threads.messages.create(thread, {
+        role: msg.role as any,
+        content: msg.content,
+      });
+    }
+  } else {
+    // Si el thread ya existe, solo añadir el mensaje del usuario
+    const userMsg = messages.find(m => m.role === 'user');
+    if (userMsg) {
+      await openai.beta.threads.messages.create(thread, {
+        role: 'user',
+        content: userMsg.content,
+      });
+    }
   }
-
-  // 2. Añadir el mensaje del usuario al thread
-  await openai.beta.threads.messages.create(thread, {
-    role: 'user',
-    content: userMessage,
-  });
 
   // 3. Ejecutar el assistant (run)
   const run = await openai.beta.threads.runs.create(thread, {
@@ -35,8 +45,8 @@ export async function askNNIAWithAssistantAPI(userMessage: string, threadId?: st
   }
 
   // 5. Obtener los mensajes finales del thread
-  const messages = await openai.beta.threads.messages.list(thread);
-  const lastMessage = messages.data.find((msg) => msg.role === 'assistant');
+  const messagesFinales = await openai.beta.threads.messages.list(thread);
+  const lastMessage = messagesFinales.data.find((msg) => msg.role === 'assistant');
   let assistantText = '';
   if (lastMessage && lastMessage.content && Array.isArray(lastMessage.content)) {
     const textBlock = lastMessage.content.find((block) => block.type === 'text');
@@ -49,6 +59,6 @@ export async function askNNIAWithAssistantAPI(userMessage: string, threadId?: st
     threadId: thread,
     run: runResult,
     message: assistantText,
-    allMessages: messages.data,
+    allMessages: messagesFinales.data,
   };
 } 
