@@ -21,47 +21,34 @@ export async function getClientData(clientId: string) {
 }
 
 export async function getPublicBusinessData(clientId: string) {
-  // Obtener solo información pública del negocio
-  const { data, error } = await supabase
+  // Obtener business_name desde clients
+  const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select(`
-      id,
-      business_name,
-      business_description,
-      business_type,
-      business_address,
-      business_phone,
-      business_email,
-      business_website,
-      business_hours,
-      business_services,
-      business_products,
-      business_slogan,
-      business_mission,
-      business_values,
-      business_social_media,
-      business_logo_url,
-      business_banner_url,
-      business_about,
-      business_faq,
-      business_testimonials,
-      business_team,
-      business_awards,
-      business_certifications,
-      business_policies,
-      business_contact_info
-    `)
+    .select('id, business_name')
     .eq('id', clientId)
     .single();
-  
-  if (error) throw error;
-  
+  if (clientError) throw clientError;
+
+  // Obtener información pública del negocio desde business_info
+  const { data: businessInfo, error: businessError } = await supabase
+    .from('business_info')
+    .select('*')
+    .eq('client_id', clientId)
+    .single();
+  if (businessError) throw businessError;
+
+  // Combinar los datos
+  const combined = {
+    business_name: client.business_name,
+    ...businessInfo
+  };
+
   // Filtrar campos vacíos o nulos para limpiar la respuesta
   const cleanData = Object.fromEntries(
-    Object.entries(data).filter(([_, value]) => 
+    Object.entries(combined).filter(([_, value]) => 
       value !== null && value !== undefined && value !== ''
     )
   );
-  
+
   return cleanData;
 } 
