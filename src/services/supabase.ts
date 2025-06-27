@@ -85,7 +85,18 @@ export async function createNotification(notification: any) {
   return data[0];
 }
 
-// En createAppointment, no enviar id/read/created_at y asegurar data es objeto
+// Helper para obtener el id de business_info a partir de client_id
+async function getBusinessInfoIdByClientId(clientId: string) {
+  const { data, error } = await supabase
+    .from('business_info')
+    .select('id')
+    .eq('client_id', clientId)
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+// En createAppointment, obtener el id de business_info y usarlo en la notificación
 export async function createAppointment(appointment: any) {
   // Forzar status 'pending' si no viene definido
   const citaData = { ...appointment, status: appointment.status || 'pending' };
@@ -95,15 +106,20 @@ export async function createAppointment(appointment: any) {
     .select();
   if (error) throw error;
   const cita = data[0];
-  // Crear notificación asociada
+  // Intentar crear notificación asociada, pero no fallar si hay error
   if (cita && cita.client_id) {
-    await createNotification({
-      client_id: cita.client_id,
-      type: 'cita',
-      title: 'Nueva cita agendada',
-      body: `Se ha agendado una cita para ${cita.name || ''} el ${cita.date} a las ${cita.time}.`,
-      data: { appointmentId: cita.id },
-    });
+    try {
+      const businessInfoId = await getBusinessInfoIdByClientId(cita.client_id);
+      await createNotification({
+        client_id: businessInfoId,
+        type: 'cita',
+        title: 'Nueva cita agendada',
+        body: `Se ha agendado una cita para ${cita.name || ''} el ${cita.date} a las ${cita.time}.`,
+        data: { appointmentId: cita.id },
+      });
+    } catch (notifError) {
+      console.error('Error creando notificación:', notifError);
+    }
   }
   return cita;
 }
