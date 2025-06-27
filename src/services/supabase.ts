@@ -78,31 +78,49 @@ export async function createAppointment(appointment: any) {
 // Obtener disponibilidad de un cliente
 export async function getAvailability(clientId: string) {
   const { data, error } = await supabase
-    .from('appointment_availability')
-    .select('*')
+    .from('business_info')
+    .select('appointment_days, appointment_hours, appointment_types')
     .eq('client_id', clientId)
     .single();
   if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
-  return data;
+  // Adaptar a formato esperado por el frontend
+  return data ? {
+    days: data.appointment_days ? data.appointment_days.split(',') : [],
+    hours: data.appointment_hours || '',
+    types: data.appointment_types ? data.appointment_types.split(',') : []
+  } : { days: [], hours: '', types: [] };
 }
 
 // Guardar o actualizar disponibilidad
 export async function setAvailability(clientId: string, availability: { days: string, hours: string, types: string }) {
   const { data, error } = await supabase
-    .from('appointment_availability')
-    .upsert({ client_id: clientId, ...availability }, { onConflict: 'client_id' })
+    .from('business_info')
+    .update({
+      appointment_days: availability.days,
+      appointment_hours: availability.hours,
+      appointment_types: availability.types
+    })
+    .eq('client_id', clientId)
     .select();
   if (error) throw error;
-  return data[0];
+  return data && data[0] ? {
+    days: data[0].appointment_days ? data[0].appointment_days.split(',') : [],
+    hours: data[0].appointment_hours || '',
+    types: data[0].appointment_types ? data[0].appointment_types.split(',') : []
+  } : { days: [], hours: '', types: [] };
 }
 
 // Obtener disponibilidad y tipos de cita de un cliente (helper para NNIA)
 export async function getAvailabilityAndTypes(clientId: string) {
   const { data, error } = await supabase
-    .from('appointment_availability')
-    .select('days, hours, types')
+    .from('business_info')
+    .select('appointment_days, appointment_hours, appointment_types')
     .eq('client_id', clientId)
     .single();
   if (error && error.code !== 'PGRST116') throw error;
-  return data;
+  return data ? {
+    days: data.appointment_days ? data.appointment_days.split(',') : [],
+    hours: data.appointment_hours || '',
+    types: data.appointment_types ? data.appointment_types.split(',') : []
+  } : { days: [], hours: '', types: [] };
 } 
