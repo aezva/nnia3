@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
 import { askNNIAWithModel } from '../services/openai';
-import { getClientData, getPublicBusinessData } from '../services/supabase';
+import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability } from '../services/supabase';
 
 const router = Router();
 
@@ -65,6 +65,52 @@ router.put('/appointments/:id', async (req: Request, res: Response) => {
 router.delete('/appointments/:id', async (req: Request, res: Response) => {
   // Aquí se eliminaría la cita con el id dado
   res.json({ success: true, message: 'Cita eliminada (pendiente de integración real)' });
+});
+
+// Obtener citas del cliente
+router.get('/appointments', async (req: Request, res: Response) => {
+  const clientId = req.query.clientId as string;
+  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  try {
+    const data = await getAppointments(clientId);
+    res.json({ success: true, appointments: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Crear cita
+router.post('/appointments', async (req: Request, res: Response) => {
+  try {
+    const data = await createAppointment(req.body);
+    res.json({ success: true, appointment: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener disponibilidad
+router.get('/availability', async (req: Request, res: Response) => {
+  const clientId = req.query.clientId as string;
+  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  try {
+    const data = await getAvailability(clientId);
+    res.json({ success: true, availability: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Guardar disponibilidad
+router.post('/availability', async (req: Request, res: Response) => {
+  const { clientId, days, hours, types } = req.body;
+  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  try {
+    const data = await setAvailability(clientId, { days, hours, types });
+    res.json({ success: true, availability: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router; 

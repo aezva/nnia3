@@ -51,4 +51,47 @@ export async function getPublicBusinessData(clientId: string) {
   );
 
   return cleanData;
+}
+
+// Obtener citas de un cliente
+export async function getAppointments(clientId: string) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+// Crear una cita
+export async function createAppointment(appointment: any) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert([appointment])
+    .select();
+  if (error) throw error;
+  return data[0];
+}
+
+// Obtener disponibilidad de un cliente
+export async function getAvailability(clientId: string) {
+  const { data, error } = await supabase
+    .from('appointment_availability')
+    .select('*')
+    .eq('client_id', clientId)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+  return data;
+}
+
+// Guardar o actualizar disponibilidad
+export async function setAvailability(clientId: string, availability: { days: string, hours: string, types: string }) {
+  const { data, error } = await supabase
+    .from('appointment_availability')
+    .upsert({ client_id: clientId, ...availability }, { onConflict: 'client_id' })
+    .select();
+  if (error) throw error;
+  return data[0];
 } 
