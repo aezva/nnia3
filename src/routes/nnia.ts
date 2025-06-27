@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
 import { askNNIAWithModel } from '../services/openai';
-import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability, getAvailabilityAndTypes, updateAppointment, deleteAppointment } from '../services/supabase';
+import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability, getAvailabilityAndTypes, updateAppointment, deleteAppointment, getNotifications, createNotification, markNotificationRead } from '../services/supabase';
 
 const router = Router();
 
@@ -142,6 +142,41 @@ router.post('/availability', async (req: Request, res: Response) => {
   try {
     const data = await setAvailability(clientId, { days, hours, types });
     res.json({ success: true, availability: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener notificaciones de un cliente
+router.get('/notifications', async (req: Request, res: Response) => {
+  const clientId = req.query.clientId as string;
+  if (!clientId) {
+    res.status(400).json({ error: 'Falta clientId' });
+    return;
+  }
+  try {
+    const data = await getNotifications(clientId);
+    res.json({ success: true, notifications: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Crear notificación
+router.post('/notifications', async (req: Request, res: Response) => {
+  try {
+    const data = await createNotification(req.body);
+    res.json({ success: true, notification: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Marcar notificación como leída
+router.post('/notifications/:id/read', async (req: Request, res: Response) => {
+  try {
+    const data = await markNotificationRead(req.params.id);
+    res.json({ success: true, notification: data });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

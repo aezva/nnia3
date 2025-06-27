@@ -72,7 +72,18 @@ export async function createAppointment(appointment: any) {
     .insert([appointment])
     .select();
   if (error) throw error;
-  return data[0];
+  const cita = data[0];
+  // Crear notificación asociada
+  if (cita && cita.client_id) {
+    await createNotification({
+      client_id: cita.client_id,
+      type: 'cita',
+      title: 'Nueva cita agendada',
+      body: `Se ha agendado una cita para ${cita.name || ''} el ${cita.date} a las ${cita.time}.`,
+      data: { appointmentId: cita.id },
+    });
+  }
+  return cita;
 }
 
 // Obtener disponibilidad de un cliente
@@ -144,4 +155,36 @@ export async function deleteAppointment(id: string) {
     .eq('id', id);
   if (error) throw error;
   return { success: true };
+}
+
+// Crear notificación
+export async function createNotification(notification: any) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert([notification])
+    .select();
+  if (error) throw error;
+  return data[0];
+}
+
+// Obtener notificaciones de un cliente
+export async function getNotifications(clientId: string) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// Marcar notificación como leída
+export async function markNotificationRead(id: string) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', id)
+    .select();
+  if (error) throw error;
+  return data[0];
 } 
