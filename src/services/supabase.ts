@@ -94,4 +94,15 @@ export async function setAvailability(clientId: string, availability: { days: st
     .select();
   if (error) throw error;
   return data[0];
+}
+
+// Obtener disponibilidad y tipos de cita de un cliente (helper para NNIA)
+export async function getAvailabilityAndTypes(clientId: string) {
+  const { data, error } = await supabase
+    .from('appointment_availability')
+    .select('days, hours, types')
+    .eq('client_id', clientId)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
 } 

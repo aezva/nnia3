@@ -1,4 +1,4 @@
-export function buildPrompt({ businessData, message, source }: { businessData: any, message: string, source: string }) {
+export function buildPrompt({ businessData, message, source, availability }: { businessData: any, message: string, source: string, availability?: any }) {
   // Determinar el rol de NNIA según el canal/source
   let rol = '';
   if (source === 'client-panel') {
@@ -33,11 +33,18 @@ export function buildPrompt({ businessData, message, source }: { businessData: a
     informacion_contacto: businessData.contact_info
   };
 
+  // Añadir disponibilidad y tipos de cita al contexto
+  const citaContext = availability ? {
+    disponibilidad_citas: availability.days,
+    horarios_citas: availability.hours,
+    tipos_cita: availability.types
+  } : {};
+
   // Solo retornar el mensaje del usuario, el contexto debe estar en la configuración del Assistant
   return [
     {
       role: 'user',
-      content: `Información del negocio: ${JSON.stringify(businessContext)}. Canal: ${source}. ${rol}\n\nMensaje del usuario: ${message}`,
+      content: `Información del negocio: ${JSON.stringify(businessContext)}. Configuración de citas: ${JSON.stringify(citaContext)}. Canal: ${source}. ${rol}\n\nMensaje del usuario: ${message}`,
     },
   ];
 } 

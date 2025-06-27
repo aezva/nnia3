@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
 import { askNNIAWithModel } from '../services/openai';
-import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability } from '../services/supabase';
+import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability, getAvailabilityAndTypes } from '../services/supabase';
 
 const router = Router();
 
@@ -17,16 +17,18 @@ router.post('/respond', async (req: Request, res: Response) => {
   try {
     // 1. Obtener información pública del negocio (sin datos confidenciales)
     const businessData = await getPublicBusinessData(clientId);
+    // 2. Obtener disponibilidad y tipos de cita
+    const availability = await getAvailabilityAndTypes(clientId);
 
-    // 2. Construir prompt personalizado con solo información pública
-    const prompt = buildPrompt({ businessData, message, source });
+    // 3. Construir prompt personalizado con solo información pública y disponibilidad
+    const prompt = buildPrompt({ businessData, message, source, availability });
 
-    // 3. Elegir modelo según el canal
+    // 4. Elegir modelo según el canal
     let model = 'gpt-3.5-turbo';
     // Si en el futuro quieres usar gpt-4 para el panel, puedes hacer:
     // if (source === 'client-panel') model = 'gpt-4';
 
-    // 4. Llamar a la API de OpenAI con el modelo elegido
+    // 5. Llamar a la API de OpenAI con el modelo elegido
     const nniaResponse = await askNNIAWithModel(prompt, model);
 
     // 4. (Opcional) Aquí puedes analizar si OpenAI pidió ejecutar una función y ejecutarla
