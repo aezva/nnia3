@@ -87,7 +87,10 @@ router.delete('/appointments/:id', async (req: Request, res: Response) => {
 // Obtener citas del cliente
 router.get('/appointments', async (req: Request, res: Response) => {
   const clientId = req.query.clientId as string;
-  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  if (!clientId) {
+    res.status(400).json({ error: 'Falta clientId' });
+    return;
+  }
   try {
     const data = await getAppointments(clientId);
     res.json({ success: true, appointments: data });
@@ -109,7 +112,10 @@ router.post('/appointments', async (req: Request, res: Response) => {
 // Obtener disponibilidad
 router.get('/availability', async (req: Request, res: Response) => {
   const clientId = req.query.clientId as string;
-  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  if (!clientId) {
+    res.status(400).json({ error: 'Falta clientId' });
+    return;
+  }
   try {
     const data = await getAvailability(clientId);
     res.json({ success: true, availability: data });
@@ -121,7 +127,10 @@ router.get('/availability', async (req: Request, res: Response) => {
 // Guardar disponibilidad
 router.post('/availability', async (req: Request, res: Response) => {
   const { clientId, days, hours, types } = req.body;
-  if (!clientId) return res.status(400).json({ error: 'Falta clientId' });
+  if (!clientId) {
+    res.status(400).json({ error: 'Falta clientId' });
+    return;
+  }
   try {
     const data = await setAvailability(clientId, { days, hours, types });
     res.json({ success: true, availability: data });
