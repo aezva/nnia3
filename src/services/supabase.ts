@@ -65,7 +65,27 @@ export async function getAppointments(clientId: string) {
   return data;
 }
 
-// Crear una cita
+// Helper para limpiar notificación antes de insertar
+function cleanNotificationInput(notification: any) {
+  const { id, read, created_at, ...rest } = notification;
+  return {
+    ...rest,
+    data: typeof rest.data === 'object' && rest.data !== null ? rest.data : {},
+  };
+}
+
+// Crear notificación
+export async function createNotification(notification: any) {
+  const clean = cleanNotificationInput(notification);
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert([clean])
+    .select();
+  if (error) throw error;
+  return data[0];
+}
+
+// En createAppointment, no enviar id/read/created_at y asegurar data es objeto
 export async function createAppointment(appointment: any) {
   const { data, error } = await supabase
     .from('appointments')
@@ -155,16 +175,6 @@ export async function deleteAppointment(id: string) {
     .eq('id', id);
   if (error) throw error;
   return { success: true };
-}
-
-// Crear notificación
-export async function createNotification(notification: any) {
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert([notification])
-    .select();
-  if (error) throw error;
-  return data[0];
 }
 
 // Obtener notificaciones de un cliente
