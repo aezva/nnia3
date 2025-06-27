@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
 import { askNNIAWithModel } from '../services/openai';
-import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability, getAvailabilityAndTypes } from '../services/supabase';
+import { getClientData, getPublicBusinessData, getAppointments, createAppointment, getAvailability, setAvailability, getAvailabilityAndTypes, updateAppointment, deleteAppointment } from '../services/supabase';
 
 const router = Router();
 
@@ -75,13 +75,21 @@ router.post('/appointments', async (req: Request, res: Response) => {
 });
 
 router.put('/appointments/:id', async (req: Request, res: Response) => {
-  // Aquí se actualizaría la cita con el id dado
-  res.json({ success: true, message: 'Cita actualizada (pendiente de integración real)' });
+  try {
+    const data = await updateAppointment(req.params.id, req.body);
+    res.json({ success: true, appointment: data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 router.delete('/appointments/:id', async (req: Request, res: Response) => {
-  // Aquí se eliminaría la cita con el id dado
-  res.json({ success: true, message: 'Cita eliminada (pendiente de integración real)' });
+  try {
+    await deleteAppointment(req.params.id);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Obtener citas del cliente

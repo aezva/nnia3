@@ -123,4 +123,25 @@ export async function getAvailabilityAndTypes(clientId: string) {
     hours: data.appointment_hours || '',
     types: data.appointment_types ? data.appointment_types.split(',') : []
   } : { days: [], hours: '', types: [] };
+}
+
+// Actualizar una cita
+export async function updateAppointment(id: string, updates: any) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(updates)
+    .eq('id', id)
+    .select();
+  if (error) throw error;
+  return data && data[0];
+}
+
+// Eliminar una cita
+export async function deleteAppointment(id: string) {
+  const { error } = await supabase
+    .from('appointments')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { success: true };
 } 
