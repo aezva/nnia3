@@ -30,13 +30,28 @@ router.post('/respond', async (req: Request, res: Response) => {
 
     // 5. Llamar a la API de OpenAI con el modelo elegido
     const nniaResponse = await askNNIAWithModel(prompt, model);
+    let nniaMsg = nniaResponse.message;
+    let citaCreada = null;
 
-    // 4. (Opcional) Aquí puedes analizar si OpenAI pidió ejecutar una función y ejecutarla
-    // Por ejemplo, si nniaResponse.run.required_action === 'function_call', ejecuta la función y responde
+    // 6. Detectar si NNIA quiere crear una cita
+    if (nniaMsg && nniaMsg.trim().startsWith('CREAR_CITA:')) {
+      try {
+        const citaStr = nniaMsg.replace('CREAR_CITA:', '').trim();
+        const citaData = JSON.parse(citaStr);
+        // Agregar client_id y origin si falta
+        citaData.client_id = clientId;
+        if (!citaData.origin) citaData.origin = source === 'client-panel' ? 'panel' : 'web';
+        citaCreada = await createAppointment(citaData);
+        nniaMsg = `✅ Cita agendada correctamente para ${citaCreada.name} el ${citaCreada.date} a las ${citaCreada.time} (${citaCreada.type}). Se ha enviado confirmación a tu panel.`;
+      } catch (e) {
+        nniaMsg = 'Ocurrió un error al intentar agendar la cita. Por favor, revisa los datos e inténtalo de nuevo.';
+      }
+    }
 
     res.json({
       success: true,
-      nnia: nniaResponse.message,
+      nnia: nniaMsg,
+      cita: citaCreada,
       allMessages: nniaResponse.allMessages
     });
   } catch (error: any) {

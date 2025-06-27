@@ -40,11 +40,14 @@ export function buildPrompt({ businessData, message, source, availability }: { b
     tipos_cita: availability.types
   } : {};
 
+  // Instrucción especial para agendar citas
+  const citaInstruccion = `Si en la conversación tienes todos los datos para agendar una cita (nombre, email, tipo, día y hora), responde SOLO con la frase: CREAR_CITA: seguido de los datos en formato JSON, por ejemplo: CREAR_CITA: {"name":"Juan Pérez","email":"juan@email.com","type":"phone","date":"2024-06-20","time":"10:00","origin":"web"}`;
+
   // Solo retornar el mensaje del usuario, el contexto debe estar en la configuración del Assistant
   return [
     {
       role: 'user',
-      content: `Información del negocio: ${JSON.stringify(businessContext)}. Configuración de citas: ${JSON.stringify(citaContext)}. Canal: ${source}. ${rol}\n\nMensaje del usuario: ${message}`,
+      content: `Información del negocio: ${JSON.stringify(businessContext)}. Configuración de citas: ${JSON.stringify(citaContext)}. Canal: ${source}. ${rol}\n${citaInstruccion}\n\nMensaje del usuario: ${message}`,
     },
   ];
 } 
