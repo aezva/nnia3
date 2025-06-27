@@ -101,9 +101,9 @@ router.get('/appointments', async (req: Request, res: Response) => {
   }
   try {
     const data = await getAppointments(clientId);
-    res.json({ success: true, appointments: data });
+    res.json({ success: true, appointments: Array.isArray(data) ? data : [] });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, appointments: [] });
   }
 });
 
@@ -156,9 +156,9 @@ router.get('/notifications', async (req: Request, res: Response) => {
   }
   try {
     const data = await getNotifications(clientId);
-    res.json({ success: true, notifications: data });
+    res.json({ success: true, notifications: Array.isArray(data) ? data : [] });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, notifications: [] });
   }
 });
 
