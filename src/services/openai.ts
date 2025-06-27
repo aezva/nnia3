@@ -1,9 +1,26 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import OpenAI from 'openai';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const assistantId = process.env.OPENAI_ASSISTANT_ID || '';
+
+// NUEVO: función para chat directo con modelo (sin Assistant API)
+export async function askNNIAWithModel(messages: {role: string, content: string}[], model: string = 'gpt-3.5-turbo') {
+  // Convertir los mensajes al tipo correcto para OpenAI
+  const formattedMessages: ChatCompletionMessageParam[] = messages.map(m => ({ role: m.role as any, content: m.content }));
+  const completion = await openai.chat.completions.create({
+    model,
+    messages: formattedMessages,
+    temperature: 0.7,
+    max_tokens: 1024,
+  });
+  return {
+    message: completion.choices[0]?.message?.content || '',
+    allMessages: completion.choices,
+  };
+}
 
 export async function askNNIAWithAssistantAPI(messages: {role: string, content: string}[], threadId?: string) {
   // 1. Si no hay thread, crear uno nuevo

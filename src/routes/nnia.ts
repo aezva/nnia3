@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { buildPrompt } from '../utils/promptBuilder';
-import { askNNIAWithAssistantAPI } from '../services/openai';
+import { askNNIAWithModel } from '../services/openai';
 import { getClientData, getPublicBusinessData } from '../services/supabase';
 
 const router = Router();
@@ -21,8 +21,13 @@ router.post('/respond', async (req: Request, res: Response) => {
     // 2. Construir prompt personalizado con solo información pública
     const prompt = buildPrompt({ businessData, message, source });
 
-    // 3. Llamar a la Assistant API de OpenAI (con prompt personalizado)
-    const nniaResponse = await askNNIAWithAssistantAPI(prompt, threadId);
+    // 3. Elegir modelo según el canal
+    let model = 'gpt-3.5-turbo';
+    // Si en el futuro quieres usar gpt-4 para el panel, puedes hacer:
+    // if (source === 'client-panel') model = 'gpt-4';
+
+    // 4. Llamar a la API de OpenAI con el modelo elegido
+    const nniaResponse = await askNNIAWithModel(prompt, model);
 
     // 4. (Opcional) Aquí puedes analizar si OpenAI pidió ejecutar una función y ejecutarla
     // Por ejemplo, si nniaResponse.run.required_action === 'function_call', ejecuta la función y responde
@@ -30,9 +35,7 @@ router.post('/respond', async (req: Request, res: Response) => {
     res.json({
       success: true,
       nnia: nniaResponse.message,
-      threadId: nniaResponse.threadId,
-      allMessages: nniaResponse.allMessages,
-      run: nniaResponse.run
+      allMessages: nniaResponse.allMessages
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Error procesando la solicitud de NNIA', details: error.message });
