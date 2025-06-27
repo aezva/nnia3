@@ -87,9 +87,11 @@ export async function createNotification(notification: any) {
 
 // En createAppointment, no enviar id/read/created_at y asegurar data es objeto
 export async function createAppointment(appointment: any) {
+  // Forzar status 'pending' si no viene definido
+  const citaData = { ...appointment, status: appointment.status || 'pending' };
   const { data, error } = await supabase
     .from('appointments')
-    .insert([appointment])
+    .insert([citaData])
     .select();
   if (error) throw error;
   const cita = data[0];
